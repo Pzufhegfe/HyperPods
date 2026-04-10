@@ -7,7 +7,7 @@ plugins {
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.parcelize)
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.jetbrains.compose)
+//    alias(libs.plugins.jetbrains.compose)
 }
 
 apksign {
