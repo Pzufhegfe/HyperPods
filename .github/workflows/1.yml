@@ -23,17 +23,23 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: 'oracle'
-          java-version: '22' # 必须是 22，匹配你的 build.gradle.kts
+          java-version: '22'
+      
+      - name: Install Android SDK 36
+        run: |
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-36"
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4 # 使用更稳定的 v4 适配新版 Gradle
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Build with Gradle
         run: |
           # 给予执行权限
           chmod +x gradlew
-          # 直接运行编译，不再手动修改 gradle.properties 以免冲突
-          ./gradlew clean assembleRelease --no-daemon --stacktrace
+          ./gradlew clean assembleRelease \
+            -Pandroid.suppressUnsupportedCompileSdk=36 \
+            --no-daemon \
+            --stacktrace
 
       - name: Get Build Tool Version
         shell: bash
