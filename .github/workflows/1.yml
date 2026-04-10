@@ -22,7 +22,7 @@ jobs:
       - name: Setup Java 22
         uses: actions/setup-java@v5
         with:
-          distribution: 'temurin'
+          distribution: 'oracle'
           java-version: '22' # 必须是 22，匹配你的 build.gradle.kts
 
       - name: Setup Gradle
@@ -33,7 +33,7 @@ jobs:
           # 给予执行权限
           chmod +x gradlew
           # 直接运行编译，不再手动修改 gradle.properties 以免冲突
-          ./gradlew assembleRelease --stacktrace
+          ./gradlew clean assembleRelease --no-daemon --stacktrace
 
       - name: Get Build Tool Version
         shell: bash
