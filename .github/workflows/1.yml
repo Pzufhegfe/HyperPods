@@ -1,0 +1,63 @@
+name: Build HyperPods
+
+on:
+  push:
+    tags: [ "*" ]
+    branches: [ "main", "aap" ]
+  pull_request:
+    branches: [ "main", "aap" ]
+  workflow_dispatch: 
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java 22
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '22' # 必须是 22，匹配你的 build.gradle.kts
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4 # 使用更稳定的 v4 适配新版 Gradle
+
+      - name: Build with Gradle
+        run: |
+          # 给予执行权限
+          chmod +x gradlew
+          # 直接运行编译，不再手动修改 gradle.properties 以免冲突
+          ./gradlew assembleRelease --stacktrace
+
+      - name: Get Build Tool Version
+        shell: bash
+        run: |
+          BUILD_TOOL_VERSION=$(ls /usr/local/lib/android/sdk/build-tools/ | tail -n 1)
+          echo "BUILD_TOOL_VERSION=$BUILD_TOOL_VERSION" >> $GITHUB_ENV
+
+      - name: Sign Release
+        env: 
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+        if: ${{ env.SIGNING_KEY != '' }}
+        uses: kevin-david/zipalign-sign-android-release@v2
+        id: sign_app
+        with:
+          releaseDirectory: app/build/outputs/apk/release
+          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+          alias: ${{ secrets.ALIAS }}
+          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
+
+      - name: Upload build artifact
+        if: steps.sign_app.outputs.signedReleaseFile != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: HyperPods-Signed
+          path: ${{steps.sign_app.outputs.signedReleaseFile}}
+          
